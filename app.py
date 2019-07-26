@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, abort, make_response, request
+from flask_cors import CORS
 from bson.json_util import dumps
 import database
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
