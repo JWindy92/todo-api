@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, abort, make_response, request
+from flask import Flask, jsonify, abort, make_response, request, url_for
 from flask_cors import CORS
 from bson.json_util import dumps
 import database
@@ -8,7 +8,12 @@ CORS(app)
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
-	return dumps(database.db.tasks.find())
+	result = database.db.tasks.find()
+	task_list = []
+	for i in result:
+		task_list.append(make_public_task(i))
+	return jsonify(task_list)
+
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['GET'])
 def get_task(task_id):
@@ -53,6 +58,16 @@ def delete_task(task_id):
 		abort(404)
 	database.tasks.delete_one({'_id' : task_id})
 	return jsonify({'result': True})
+
+def make_public_task(task):
+	new_task = {}
+	for field in task:
+		if field == '_id':
+			new_task['uri'] = url_for('get_task', task_id=task['_id'], _external=True)
+		else:
+			new_task[field] = task[field]
+	return new_task
+
 
 @app.errorhandler(404)
 def not_found(error):
